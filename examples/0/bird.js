@@ -11,7 +11,7 @@ class Bird {
     this.x = max(canvas.width * 0.2, 64);
 
     this.gravity = 0.6;
-    this.lift = -10;
+    this.lift = -7;
     // this.lift = -7;
     this.velocity = 0;
 

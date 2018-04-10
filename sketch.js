@@ -9,21 +9,8 @@
 // Exported sprites (eslint flags)
 /* exported birdSprite, pipeBodySprite, pipePeakSprite */
 
-var MAX_BIRDS = 15; // two slots saved for best performers
-var MUTATION_RATE = 0.1;
-// var
-var BIRD_SIZE = 64;
-var brainTrust = { fittestOverall: null, fittestLastTurn: null };
-var generation = 0,
-  highestFitnessOverall = 0,
-  highestFitnessLastTurn = 0,
-  averageFitnessOverall = 0,
-  averageFitnessLastTurn = 0,
-  totalFitnessOverall = 0,
-  totalFitnessLastTurn = 0;
-var pipes = [];
-var nextPipe;
-var lastPipe;
+var bird;
+var pipes;
 var parallax = 0.8;
 var score = 0;
 var maxScore = 0;
@@ -38,13 +25,6 @@ var isOver = false;
 var touched = false;
 var prevTouched = touched;
 
-function addBird(brain = null) {
-  let bird = new Bird();
-  bird.brain = brain ? new NeuralNetwork(brain) : new NeuralNetwork(4, 50, 2);
-  // bird.brain.setActivationFunction({ func: (x) => (x > 0 ? x : 0) });
-  bird.brain.setActivationFunction({ func: (x) => (2/exp(-2*x)-1) });
-  return bird;
-}
 
 function preload() {
   pipeBodySprite = loadImage('graphics/pipe_marshmallow_fix.png');
@@ -52,8 +32,6 @@ function preload() {
   birdSprite = loadImage('graphics/train.png');
   bgImg = loadImage('graphics/background.png');
 }
-
-var birds;
 
 function setup() {
   createCanvas(800, 600);
@@ -81,6 +59,14 @@ function draw() {
   for (var i = pipes.length - 1; i >= 0; i--) {
     pipes[i].update();
     pipes[i].show();
+
+    if (pipes[i].pass(bird)) {
+      score++;
+    }
+
+    if (pipes[i].hits(bird)) {
+      gameover();
+    }
 
     if (pipes[i].offscreen()) {
       pipes.splice(i, 1);
@@ -115,7 +101,6 @@ function draw() {
 }
 
 function showScores() {
-  maxScore = max(score, maxScore);
   textSize(32);
   text('score: ' + score, 1, 32);
   text('record: ' + maxScore, 1, 64);
@@ -135,24 +120,18 @@ function reset() {
   isOver = false;
   score = 0;
   bgX = 0;
-  crossover();
   pipes = [];
+  bird = new Bird();
   pipes.push(new Pipe());
   gameoverFrame = frameCount - 1;
   loop();
 }
 
-function findNextPipe() {
-  let scratch = null;
-  let birdX = birds[0].x;
-  let birdW = birds[0].width * 0.5 + 1;
-  for (let pipe of pipes) {
-    if (pipe.x + pipe.w + 1 > birdX - birdW) {
-      if (scratch === null) scratch = pipe;
-      if (scratch.x > pipe.x) scratch = pipe;
-    }
+function keyPressed() {
+  if (key === ' ') {
+    bird.up();
+    if (isOver) reset(); //you can just call reset() in Machinelearning if you die, because you cant simulate keyPress with code.
   }
-  return scratch;
 }
 
 function touchStarted() {
