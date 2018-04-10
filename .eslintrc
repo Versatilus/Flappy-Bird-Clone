@@ -17,9 +17,17 @@
   "extends": [
     "eslint:recommended",
     "p5js",
-    "p5js/dom"
+    "p5js/dom",
+    "prettier"
   ],
+  "plugins": ["prettier"],
   "rules": {
+     "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true
+      }
+    ],
     "arrow-parens": [
       "error"
     ],
