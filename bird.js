@@ -5,24 +5,35 @@
 
 // Class is exported (eslint flag)
 /* exported Bird */
-
 class Bird {
   constructor() {
     this.y = height / 2;
-    this.x = 64;
+    this.x = max(canvas.width * 0.2, 64);
 
     this.gravity = 0.6;
     this.lift = -10;
     this.velocity = 0;
 
     this.icon = birdSprite;
-    this.width = 64;
-    this.height = 64;
+    this.width = BIRD_SIZE;
+    this.height = BIRD_SIZE;
+    this.tint = [Math.random(), 1, 1];
+    this.fitness = 1;
+    this.dead = false;
   }
 
   show() {
     // draw the icon CENTERED around the X and Y coords of the bird object
-    image(this.icon, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+    // push();
+    // tint(...this.tint);
+    image(
+      this.icon,
+      this.x - this.width / 2,
+      this.y - this.height / 2,
+      this.width,
+      this.height
+    );
+    // pop();
   }
 
   up() {

@@ -9,7 +9,7 @@
 class Pipe {
   constructor() {
     this.spacing = 125;
-    this.top = random(height / 6, 3 / 4 * height);
+    this.top = random(this.spacing * .5, height - this.spacing * 1.5);
     this.bottom = this.top + this.spacing;
 
     this.x = width;
@@ -21,9 +21,15 @@ class Pipe {
   }
 
   hits(bird) {
-    if (bird.y - bird.height / 2 < this.top || bird.y + bird.height / 2 > this.bottom) {
+    if (
+      bird.y - bird.height / 2 < this.top ||
+      bird.y + bird.height / 2 > this.bottom
+    ) {
       //if this.w is huge, then we need different collision model
-      if (bird.x + bird.width / 2 > this.x && bird.x - bird.width / 2 < this.x + this.w) {
+      if (
+        bird.x + bird.width / 2 > this.x &&
+        bird.x - bird.width / 2 < this.x + this.w
+      ) {
         this.highlight = true;
         this.passed = true;
         return true;
@@ -57,6 +63,11 @@ class Pipe {
   }
 
   show() {
+    fill(255);
+    noStroke();
+    rectMode(CORNERS);
+    rect(this.x,this.bottom,this.x+this.w,canvas.height);
+    rect(this.x,0,this.x+this.w,this.top);
     push();
     translate(this.x + this.w / 2, this.bottom);
     this.drawHalf();
@@ -71,6 +82,6 @@ class Pipe {
   }
 
   offscreen() {
-    return (this.x < -this.w);
+    return this.x < -this.w;
   }
 }
