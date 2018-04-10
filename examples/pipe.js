@@ -15,6 +15,7 @@ class Pipe {
     this.x = width;
     this.w = 80;
     this.speed = 3;
+    // this.speed = 2;
 
     this.passed = false;
     this.highlight = false;
@@ -53,6 +54,11 @@ class Pipe {
   }
 
   show() {
+    fill(255);
+    noStroke();
+    rectMode(CORNERS);
+    rect(this.x, this.bottom, this.x + this.w, canvas.height);
+    rect(this.x, 0, this.x + this.w, this.top);
     push();
     translate(this.x + this.w / 2, this.bottom);
     this.drawHalf();
