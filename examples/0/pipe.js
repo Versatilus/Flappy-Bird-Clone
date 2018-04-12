@@ -54,11 +54,6 @@ class Pipe {
   }
 
   show() {
-    fill(255);
-    noStroke();
-    rectMode(CORNERS);
-    rect(this.x, this.bottom, this.x + this.w, canvas.height);
-    rect(this.x, 0, this.x + this.w, this.top);
     push();
     translate(this.x + this.w / 2, this.bottom);
     this.drawHalf();

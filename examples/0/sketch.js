@@ -9,7 +9,7 @@
 // Exported sprites (eslint flags)
 /* exported birdSprite, pipeBodySprite, pipePeakSprite */
 
-var MAX_BIRDS = 15; // two slots saved for best performers
+var MAX_BIRDS = 25; // two slots saved for best performers
 var MUTATION_RATE = 0.1;
 // var
 var BIRD_SIZE = 64;
@@ -19,8 +19,10 @@ var generation = 0,
   highestFitnessLastTurn = 0,
   averageFitnessOverall = 0,
   averageFitnessLastTurn = 0,
-  totalFitnessOverall = 0,
   totalFitnessLastTurn = 0;
+  currentBest = 0,
+  currentAverage = 0,
+  currentTotal = 0;
 var pipes = [];
 var nextPipe;
 var lastPipe;
@@ -40,15 +42,15 @@ var prevTouched = touched;
 
 function addBird(brain = null) {
   let bird = new Bird();
-  bird.brain = brain ? new NeuralNetwork(brain) : new NeuralNetwork(4, 50, 2);
-  // bird.brain.setActivationFunction({ func: (x) => (x > 0 ? x : 0) });
-  bird.brain.setActivationFunction({ func: (x) => (2/exp(-2*x)-1) });
+  bird.brain = brain ? new NeuralNetwork(brain) : new NeuralNetwork(4, 16, 2);
+  bird.brain.setActivationFunction({ func: (x) => (x > 0 ? x : 0) });
+  // bird.brain.setActivationFunction({ func: (x) => (2/exp(-2*x)-1) });
   return bird;
 }
 
 function preload() {
-  pipeBodySprite = loadImage('graphics/pipe_marshmallow.png');
-  pipePeakSprite = loadImage('graphics/pipe_marshmallow.png');
+  pipeBodySprite = loadImage('graphics/pipe_rainbow_luminosity_blue.png');
+  pipePeakSprite = loadImage('graphics/pipe_rainbow_luminosity_blue.png');
   birdSprite = loadImage('graphics/train.png');
   bgImg = loadImage('graphics/background.png');
 }
@@ -57,8 +59,9 @@ var birds;
 
 function setup() {
   colorMode(HSB, 1, 1, 1, 1);
-  createCanvas(800, 600);
+  createCanvas(800, 600).parent('container');
   reset();
+  initializeDisplay();
 }
 
 function draw() {
@@ -92,14 +95,22 @@ function draw() {
   let pipeX = nextPipe.x;
   let cw = canvas.width,
     ch = canvas.height;
+    currentTotal=0;
   for (let bird of birds) {
     if (nextPipe.hits(bird) || lastPipe.hits(bird)) {
       bird.dead = true;
     }
     if (bird.dead === false) {
-      let fitnessModifier = spacing / abs(bird.y - pipeGapCenter);
-      bird.fitness += fitnessModifier * (score + 1);
-      // bird.fitness *= (1.00001+score);
+      let fitnessModifier;
+      if(bird.y > pipeGapCenter){
+        fitnessModifier = 2 * (1-(bird.y - pipeGapCenter)/(ch-bird.height*.5-pipeGapCenter))
+        *(1-(pipeX-bird.x)/(cw-bird.x));
+      }else{
+        fitnessModifier = 2 * (1-(pipeGapCenter-bird.y)/(pipeGapCenter-bird.height*.5))
+        *(1-(pipeX-bird.x)/(cw-bird.x));}
+      bird.fitness += fitnessModifier * (2*score + 1);
+      // bird.fitness += 1*(1+score);
+      // if (frameCount%4===0) {
       let action = bird.brain.predict([
         bird.y / ch,
         pipeX / cw,
@@ -113,11 +124,16 @@ function draw() {
         // if (action[0] / action.reduce((a, b) => a + b, 0) > 0.5) {
         bird.up();
       }
+      // }
       bird.update();
       bird.show();
+      currentBest = bird.fitness>currentBest?bird.fitness:currentBest;
+      currentTotal += bird.fitness;
     }
+    currentAverage=currentTotal/birds.length;
   }
-  if ((frameCount - gameoverFrame) % 150 == 0) {
+  // if ((frameCount - gameoverFrame) % 150 == 0) {
+  if ((frameCount - gameoverFrame) % ~~(350/pipes[0].speed) == 0) {
     pipes.push(new Pipe());
   }
   let scratchPipe = findNextPipe();
@@ -127,7 +143,8 @@ function draw() {
     nextPipe = scratchPipe;
   }
   showScores();
-  if (birds.every(x => x.dead)) gameover();
+  if (birds.every((x) => x.dead)) gameover();
+  if (frameCount%6===0)  updateDisplay();
 }
 
 function showScores() {
@@ -138,15 +155,7 @@ function showScores() {
 }
 
 function gameover() {
-  // textSize(64);
-  // textAlign(CENTER, CENTER);
-  // text('GAMEOVER', width / 2, height / 2);
-  // textAlign(LEFT, BASELINE);
-  // maxScore = max(score, maxScore);
-
   isOver = true;
-  // noLoop();
-
   generation++;
   let lastHighest = 0;
   let lastFittest;
@@ -162,15 +171,14 @@ function gameover() {
   brainTrust.fittestLastTurn = lastFittest.brain.copy();
   highestFitnessLastTurn = lastHighest;
   if (lastHighest >= highestFitnessOverall) {
-    brainTrust.fittestOverall = brainTrust.fittestLastTurn;
+    brainTrust.fittestOverall = brainTrust.fittestLastTurn.copy();
     highestFitnessOverall = lastHighest;
   }
   averageFitnessLastTurn = totalFitnessLastTurn / birds.length;
   averageFitnessOverall =
     (averageFitnessOverall + averageFitnessLastTurn) * 0.5;
-  totalFitnessOverall += totalFitnessLastTurn;
-
-  birds.sort((a, b) => b.fitness - a.fitness);
+  currentBest = 0;
+  currentTotal = 0;
   reset();
 }
 
@@ -184,7 +192,7 @@ function reset() {
   nextPipe = pipes[0];
   lastPipe = nextPipe;
   gameoverFrame = frameCount - 1;
-  loop();
+  // loop();
 }
 
 function findNextPipe() {
@@ -204,29 +212,30 @@ function crossover() {
   let newBirds = [];
   if (birds) {
     let matingPool = [];
+    let total = birds.reduce((a,b)=>a+exp(b.fitness), 0)
     for (let bird of birds) {
       for (
-        let i = 0, end = ~~(bird.fitness / totalFitnessLastTurn * 1000) + 1;
+        let i = 0, end = ~~(exp(bird.fitness) / total * 1000) + 1;
         i < end;
         ++i
       ) {
         matingPool.push(bird);
       }
     }
-
-    newBirds.push(addBird(brainTrust.fittestOverall));
-    newBirds.push(addBird(brainTrust.fittestLastTurn));
-    for (let i = 0, end = ~~(birds.length * 0.8) - 2; i < end; ++i) {
+    birds.sort((a, b) => b.fitness - a.fitness);
+    newBirds.push(addBird(brainTrust.fittestOverall.copy()));
+    newBirds.push(addBird(brainTrust.fittestLastTurn.copy()));
+    for (let i = 0, end = ~~(birds.length * 0.9) - 2; i < end; ++i) {
       let partner = random(matingPool).brain.copy();
-      scratch = addBird(birds[i].brain);
+      scratch = addBird(birds[i].brain.copy());
       scratch.brain.combine(partner, 1 - (i + 1) / end);
-      scratch.brain.mutate(0.05);
+      // scratch.brain.mutate(0.05);
       newBirds.push(scratch);
     }
   }
   while (newBirds.length < MAX_BIRDS) {
     newBirds.push(addBird());
   }
-  // newBirds.forEach((x, i, arr) => (x.tint = [i / arr.length, 1, 1, 0.5]));
+  // newBirds.forEach((x, i, arr)s => (x.tint = [i / arr.length, 1, 1, 0.5]));
   birds = newBirds;
 }
