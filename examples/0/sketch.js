@@ -225,11 +225,11 @@ function crossover() {
     birds.sort((a, b) => b.fitness - a.fitness);
     newBirds.push(addBird(brainTrust.fittestOverall.copy()));
     newBirds.push(addBird(brainTrust.fittestLastTurn.copy()));
-    for (let i = 0, end = ~~(birds.length * 0.9) - 2; i < end; ++i) {
+    for (let i = 0, end = ~~(birds.length * 0.8) - 2; i < end; ++i) {
       let partner = random(matingPool).brain.copy();
       scratch = addBird(birds[i].brain.copy());
       scratch.brain.combine(partner, 1 - (i + 1) / end);
-      // scratch.brain.mutate(0.05);
+      scratch.brain.mutate(0.1);
       newBirds.push(scratch);
     }
   }
