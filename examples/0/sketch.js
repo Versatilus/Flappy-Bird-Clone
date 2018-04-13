@@ -49,8 +49,8 @@ function addBird(brain = null) {
 }
 
 function preload() {
-  pipeBodySprite = loadImage('graphics/pipe_rainbow_luminosity_blue.png');
-  pipePeakSprite = loadImage('graphics/pipe_rainbow_luminosity_blue.png');
+  pipeBodySprite = loadImage('graphics/pipe_marshmallow_blue.png');
+  pipePeakSprite = loadImage('graphics/pipe_marshmallow_blue.png');
   birdSprite = loadImage('graphics/train.png');
   bgImg = loadImage('graphics/background.png');
 }
